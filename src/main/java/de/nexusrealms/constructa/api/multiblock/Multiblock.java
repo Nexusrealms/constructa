@@ -26,7 +26,9 @@ import java.util.function.Predicate;
 
 import static com.mojang.text2speech.Narrator.LOGGER;
 
-
+/**
+ * Represents a multiblock structure with a specific pattern and predicates for block states.
+ */
 @SuppressWarnings({"unused"})
 public class Multiblock {
     private char[][][] pattern;
@@ -40,6 +42,13 @@ public class Multiblock {
 
     public static HashMap<BlockPos, MultiblockPreviewElement> previewElements = new HashMap<>();
 
+    /**
+     * Constructs a Multiblock with the given pattern, predicates, and preview option.
+     *
+     * @param pattern       The 3D pattern of the multiblock.
+     * @param predicates    The predicates for each character in the pattern.
+     * @param shouldPreview Whether the multiblock should be previewed.
+     */
     public Multiblock(char[][][] pattern, HashMap<Character, Predicate<BlockState>> predicates, boolean shouldPreview) {
         this.pattern = pattern;
         this.predicates = predicates;
@@ -66,18 +75,25 @@ public class Multiblock {
         return this.previewing;
     }
 
+    /**
+     * Checks if the multiblock structure is valid at the given position in the world.
+     *
+     * @param mainBlockPos The main block position to check from.
+     * @param world        The world to check in.
+     * @return True if the multiblock structure is valid, false otherwise.
+     */
     public boolean check(BlockPos mainBlockPos, World world) {
-        //find the $ in the pattern
+        // Find the $ in the pattern
         BlockPos corner = findOffset(mainBlockPos);
         if (corner == null) {
             LOGGER.error("Multiblock pattern does not contain $");
             return false;
         }
 
-        // the value to return if the multiblock is valid or not
+        // The value to return if the multiblock is valid or not
         boolean result = true;
 
-        // loop through the pattern and check if the blocks are right
+        // Loop through the pattern and check if the blocks are right
         for (int i = 0; i < pattern.length; i++) {
             for (int j = 0; j < pattern[i].length; j++) {
                 for (int k = 0; k < pattern[i][j].length; k++) {
@@ -85,9 +101,9 @@ public class Multiblock {
                     BlockPos blockPos = corner.add(j, i, k);
                     Predicate<BlockState> predicate = predicates.get(pattern[i][j][k]);
                     boolean isRightBlock = predicate.test(world.getBlockState(blockPos));
-                    //if the block is already in the map, remove it
+                    // If the block is already in the map, remove it
                     if (shouldPreview) {
-                        // if the elements are being previewed, remove the previews
+                        // If the elements are being previewed, remove the previews
                         if (previewing) {
                             previewElements.get(blockPos).destroy();
                             Multiblock.previewElements.remove(blockPos);
@@ -98,7 +114,7 @@ public class Multiblock {
                             previewElements.put(blockPos, previewElement);
                         }
                     }
-                    // if the block is not the right block, return false
+                    // If the block is not the right block, return false
                     if (!isRightBlock) result = false;
                 }
             }
@@ -107,6 +123,9 @@ public class Multiblock {
         return result;
     }
 
+    /**
+     * Rotates the multiblock pattern 90 degrees clockwise.
+     */
     public void rotate() {
         int height = getHeight();
         int width = getWidth();
@@ -124,8 +143,14 @@ public class Multiblock {
         pattern = rotated;
     }
 
+    /**
+     * Finds the offset position of the $ character in the pattern.
+     *
+     * @param pos The position to start searching from.
+     * @return The offset position of the $ character, or null if not found.
+     */
     public BlockPos findOffset(BlockPos pos) {
-        //find the corner of the pattern
+        // Find the corner of the pattern
         for (int i = 0; i < this.height; i++) {
             for (int j = 0; j < this.width; j++) {
                 for (int k = 0; k < this.length; k++) {
@@ -138,18 +163,24 @@ public class Multiblock {
         return null;
     }
 
+    /**
+     * Gets a BlockState that matches the given predicate.
+     *
+     * @param predicate The predicate to match.
+     * @return A BlockState that matches the predicate, or null if not found.
+     */
     public static BlockState getBlockStateFromPredicate(Predicate<BlockState> predicate) {
-        // if the predicate is ANY, return air to not cause it to display something else
+        // If the predicate is ANY, return air to not cause it to display something else
         if (predicate == BlockStatePredicate.ANY) {
             return Blocks.AIR.getDefaultState();
         }
-        // loop through the already checked blockstates to not loop through all of them
+        // Loop through the already checked blockstates to not loop through all of them
         for (BlockState state : checkedCache) {
             if (predicate.test(state)) {
                 return state;
             }
         }
-        // if the blockstate is not in the cache, loop through all of them
+        // If the blockstate is not in the cache, loop through all of them
         for (Block block : Registries.BLOCK) {
             for (BlockState state : block.getStateManager().getStates()) {
                 if (predicate.test(state)) {
@@ -161,6 +192,9 @@ public class Multiblock {
         return null;
     }
 
+    /**
+     * Represents a preview element for a multiblock structure.
+     */
     public static class MultiblockPreviewElement {
         private final ElementHolder holder;
         private final HolderAttachment attachment;
@@ -198,14 +232,40 @@ public class Multiblock {
             }
         }
 
+        /**
+         * Constructs a MultiblockPreviewElement with the given position, world, and block state.
+         *
+         * @param pos       The position of the preview element.
+         * @param world     The world the preview element is in.
+         * @param state     The block state of the preview element.
+         * @param predicate The predicate for the block state.
+         */
         public MultiblockPreviewElement(BlockPos pos, World world, BlockState state, Predicate<BlockState> predicate) {
             this(pos, world, createHolder(pos), state, predicate);
         }
 
+        /**
+         * Constructs a MultiblockPreviewElement with the given position, world, holder, and block state.
+         *
+         * @param pos       The position of the preview element.
+         * @param world     The world the preview element is in.
+         * @param holder    The element holder for the preview element.
+         * @param state     The block state of the preview element.
+         * @param predicate The predicate for the block state.
+         */
         public MultiblockPreviewElement(BlockPos pos, World world, ElementHolder holder, BlockState state, Predicate<BlockState> predicate) {
             this(holder, ChunkAttachment.of(holder, (ServerWorld) world, pos), state, pos, predicate);
         }
 
+        /**
+         * Constructs a MultiblockPreviewElement with the given holder, attachment, block state, position, and predicate.
+         *
+         * @param holder    The element holder for the preview element.
+         * @param attachment The holder attachment for the preview element.
+         * @param state     The block state of the preview element.
+         * @param pos       The position of the preview element.
+         * @param predicate The predicate for the block state.
+         */
         public MultiblockPreviewElement(ElementHolder holder, HolderAttachment attachment, BlockState state, BlockPos pos, Predicate<BlockState> predicate) {
             this.holder = holder;
             this.attachment = attachment;
@@ -215,6 +275,11 @@ public class Multiblock {
             this.world = attachment.getWorld();
         }
 
+        /**
+         * Checks if the current block state matches the predicate and updates the preview element accordingly.
+         *
+         * @param state The current block state to check.
+         */
         public void matchCheck(BlockState state) {
             boolean isRightBlock = predicate.test(state);
             if (isRightBlock) {
@@ -228,6 +293,12 @@ public class Multiblock {
             this.element.tick();
         }
 
+        /**
+         * Creates a display element from the given block state.
+         *
+         * @param state The block state to create the display element from.
+         * @return The created display element.
+         */
         private DisplayElement makeElementFromState(BlockState state) {
             DisplayElement element;
             if (state.getBlock() instanceof FluidBlock) {
@@ -242,11 +313,19 @@ public class Multiblock {
             return element;
         }
 
+        /**
+         * Destroys the preview element and its attachments.
+         */
         public void destroy() {
             this.getAttachment().destroy();
             this.getHolder().destroy();
         }
 
+        /**
+         * Creates an empty block display element.
+         *
+         * @return The created block display element.
+         */
         public static BlockDisplayElement createEmptyBlockElement() {
             BlockDisplayElement element = new BlockDisplayElement();
             element.setGlowing(false);
@@ -255,6 +334,11 @@ public class Multiblock {
             return element;
         }
 
+        /**
+         * Creates an empty item display element.
+         *
+         * @return The created item display element.
+         */
         public static ItemDisplayElement createEmptyItemElement() {
             ItemDisplayElement element = new ItemDisplayElement();
             element.setGlowing(false);
@@ -263,6 +347,12 @@ public class Multiblock {
             return element;
         }
 
+        /**
+         * Creates an element holder for the given position.
+         *
+         * @param pos The position to create the holder for.
+         * @return The created element holder.
+         */
         public static ElementHolder createHolder(BlockPos pos) {
             return new ElementHolder() {
                 @Override
@@ -272,6 +362,12 @@ public class Multiblock {
             };
         }
 
+        /**
+         * Safely checks if the block state at the given position matches the predicate and updates the preview element.
+         *
+         * @param world The world to check in.
+         * @param pos   The position to check.
+         */
         public static void safeMatchCheck(World world, BlockPos pos) {
             if (world.isClient) return;
             Multiblock.MultiblockPreviewElement previewElement = Multiblock.previewElements.get(pos);
