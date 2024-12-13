@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "constructra",
+  "version": "${version}",
+
+  "name": "Constructra",
+  "description": "",
+  "authors": [],
+  "contact": {},
+
+  "license": "LGPL-3.0",
+  "icon": "assets/constructra/icon.png",
+
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "de.nexusrealms.constructa.Constructa"
+    ]
+  },
+
+  "mixins": [
+    "constructra.mixins.json"
+  ],
+
+  "depends": {
+    "fabricloader": ">=${loader_version}",
+    "fabric": "*",
+    "minecraft": "${minecraft_version}"
+  }
+}
