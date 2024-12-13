@@ -1,7 +1,6 @@
 package de.nexusrealms.constructa.api.multiblock;
 
 import de.nexusrealms.constructa.mixin.BucketItemMixin;
-import de.nexusrealms.constructa.mixin.BlockMixin;
 import eu.pb4.polymer.virtualentity.api.ElementHolder;
 import eu.pb4.polymer.virtualentity.api.attachment.ChunkAttachment;
 import eu.pb4.polymer.virtualentity.api.attachment.HolderAttachment;

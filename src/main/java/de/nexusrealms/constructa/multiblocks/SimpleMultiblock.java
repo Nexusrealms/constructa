@@ -28,8 +28,6 @@ public class SimpleMultiblock {
 
     public static void register() {
         Multiblock multiblock = new Multiblock(PATTERN, PREDICATES, true);
-        // Register the multiblock in your mod's registry system
-        // This is a placeholder, replace with actual registration code if needed
     }
 
     public static boolean checkMultiblock(World world, BlockPos pos) {
