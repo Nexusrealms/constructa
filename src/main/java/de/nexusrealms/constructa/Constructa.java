@@ -57,6 +57,26 @@ public class Constructa implements ModInitializer {
 			  }
 			}
 			""";
+	private static final String MULTIBLOCK_DEFINITION_2 = """
+			{
+			  "pattern": [
+			    [
+			      " # "
+			    ],
+			    [
+			      "###"
+			    ],
+			    [
+			      " * "
+			    ]
+			  ],
+			  "chars": {
+			    "#": "minecraft:iron_block",
+			    " ": "minecraft:air",
+			    "*": "minecraft:pumpkin"
+			  }
+			}
+			""";
 	private PatternMultiblock multiblock;
 	@Override
 	public void onInitialize() {
@@ -64,7 +84,7 @@ public class Constructa implements ModInitializer {
 		// However, some things (like resources) may still be uninitialized.
 		// Proceed with mild caution.
 		ServerLifecycleEvents.SERVER_STARTED.register(minecraftServer -> {
-			multiblock = PatternMultiblock.CODEC.parse(minecraftServer.getRegistryManager().getOps(JsonOps.INSTANCE), JsonParser.parseString(MULTIBLOCK_DEFINITION)).getOrThrow();
+			multiblock = PatternMultiblock.CODEC.parse(minecraftServer.getRegistryManager().getOps(JsonOps.INSTANCE), JsonParser.parseString(MULTIBLOCK_DEFINITION_2)).getOrThrow();
 		});
 		CommandRegistrationCallback.EVENT.register((commandDispatcher, commandRegistryAccess, registrationEnvironment) -> {
 			commandDispatcher.register(CommandManager.literal("testmultiblock")
