@@ -9,6 +9,8 @@ import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.minecraft.command.argument.BlockPosArgumentType;
+import net.minecraft.command.argument.LookingPosArgument;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import org.slf4j.Logger;
@@ -78,11 +80,12 @@ public class Constructa implements ModInitializer {
 						return 1;
 					}));
 			commandDispatcher.register(CommandManager.literal("testmultiblock3")
-					.requires(ServerCommandSource::isExecutedByPlayer)
-					.executes(commandContext -> {
-						LOGGER.info(String.valueOf(multiblock.wasFound(commandContext.getSource().getWorld(), commandContext.getSource().getPlayer().getBlockPos().down(3))));
-						return 1;
-					}));
+					.then(CommandManager.argument("where", BlockPosArgumentType.blockPos())
+							.requires(ServerCommandSource::isExecutedByPlayer)
+							.executes(commandContext -> {
+								LOGGER.info(String.valueOf(multiblock.wasFound(commandContext.getSource().getWorld(), BlockPosArgumentType.getBlockPos(commandContext, "where"))));
+								return 1;
+							})));
 		});
 		LOGGER.info("Hello Fabric world!");
 	}
