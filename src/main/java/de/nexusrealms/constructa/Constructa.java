@@ -1,28 +1,29 @@
 package de.nexusrealms.constructa;
 
-import de.nexusrealms.constructa.command.CheckMultiblockCommand;
-import de.nexusrealms.constructa.multiblocks.SimpleMultiblock;
-import de.nexusrealms.constructa.registry.ConstructaEvents;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import net.fabricmc.api.ModInitializer;
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.minecraft.util.Identifier;
-import java.util.logging.Logger;
-import java.util.logging.Level;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Constructa implements ModInitializer {
+	public static final String MOD_ID = "constructa";
 
-    public static final Logger LOGGER = Logger.getLogger("constructa");
+	// This logger is used to write text to the console and the log file.
+	// It is considered best practice to use your mod id as the logger's name.
+	// That way, it's clear which mod wrote info, warnings, and errors.
+	public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
 
-    @Override
-    public void onInitialize() {
-        ConstructaEvents.register();
-        SimpleMultiblock.register();
-        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            CheckMultiblockCommand.register(dispatcher);
-        });
-    }
+	public static final Codec<Character> CHARACTER_CODEC = Codec.STRING.comapFlatMap(s -> s.length() == 1 ? DataResult.success(s.charAt(0)) : DataResult.error(() -> "String is not a valid char"), String::valueOf);
 
-    public static Identifier id(String path) {
-        return new Identifier("constructa", path);
-    }
+
+	@Override
+	public void onInitialize() {
+		// This code runs as soon as Minecraft is in a mod-load-ready state.
+		// However, some things (like resources) may still be uninitialized.
+		// Proceed with mild caution.
+
+		LOGGER.info("Hello Fabric world!");
+	}
 }
