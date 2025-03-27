@@ -1,0 +1,30 @@
+{
+  "pattern": [
+    [
+      "A#B",
+      "###",
+      "C#D"
+    ],
+    [
+      "###",
+      "###",
+      "###"
+    ],
+    [
+      "E#F",
+      "###",
+      "G#H"
+    ]
+  ],
+  "chars": {
+    "#": "minecraft:deepslate",
+    "A": "minecraft:stone",
+    "B": "minecraft:dirt",
+    "C": "minecraft:grass_block",
+    "D": "minecraft:sand",
+    "E": "minecraft:cobbled_deepslate",
+    "F": "minecraft:iron_block",
+    "G": "minecraft:gold_block",
+    "H": "minecraft:diamond_block"
+  }
+}

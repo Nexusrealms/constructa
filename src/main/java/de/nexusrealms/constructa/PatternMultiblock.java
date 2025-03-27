@@ -3,6 +3,7 @@ package de.nexusrealms.constructa;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.codecs.RecordCodecBuilder;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
 import net.minecraft.block.pattern.BlockPattern;
 import net.minecraft.block.pattern.BlockPatternBuilder;
 import net.minecraft.server.world.ServerWorld;
@@ -53,6 +54,16 @@ public class PatternMultiblock implements Multiblock {
             for(int z = 0; z < depth; z++){
                 for(int x = 0; x < width; x++){
                     world.setBlockState(frontTopLeft.add(x, y, z), states.get(y).get(z).get(x));
+                }
+            }
+        }
+    }
+    public void constructFromPattern(ServerWorld world, BlockPos frontTopLeft) {
+        List<List<List<BlockState>>> states = Arrays.stream(transformed.getPattern()).map(a2 -> Arrays.stream(a2).map(a3 -> Arrays.stream(a3).map(p -> p instanceof BlockPositionPredicate predicate ? predicate.stateForPreview(world.getRegistryManager()) : Blocks.BARRIER.getDefaultState()).toList()).toList()).toList();
+        for (int y = 0; y < height; y++) {
+            for (int z = 0; z < depth; z++) {
+                for (int x = 0; x < width; x++) {
+                    world.setBlockState(frontTopLeft.add(x, y, z), states.get(z).get(y).get(x));
                 }
             }
         }
