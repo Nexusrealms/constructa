@@ -5,22 +5,28 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.JsonOps;
+import de.nexusrealms.constructa.api.Multiblock;
+import de.nexusrealms.constructa.api.MultiblockType;
 import net.fabricmc.api.ModInitializer;
 
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
+import net.fabricmc.fabric.api.event.registry.DynamicRegistries;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.Blocks;
 import net.minecraft.command.argument.BlockPosArgumentType;
 import net.minecraft.command.argument.LookingPosArgument;
+import net.minecraft.command.argument.RegistryEntryReferenceArgumentType;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.util.Pair;
-import net.minecraft.util.math.BlockPos;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.stream.StreamSupport;
 
 public class Constructa implements ModInitializer {
     public static final String MOD_ID = "constructa";
@@ -32,90 +38,35 @@ public class Constructa implements ModInitializer {
 
     public static final Codec<Character> CHARACTER_CODEC = Codec.STRING.comapFlatMap(s -> s.length() == 1 ? DataResult.success(s.charAt(0)) : DataResult.error(() -> "String is not a valid char"), String::valueOf);
 
-    //THESE ARE ALL DEV FEATURES IM TOO LAZY TO MAKE A TESTMOD
-    private static final String MULTIBLOCK_DEFINITION = """
-            {
-              "pattern": [
-                [
-                  "A#B",
-                  "###",
-                  "C#D"
-                ],
-                [
-                  "###",
-                  "###",
-                  "###"
-                ],
-                [
-                  "E#F",
-                  "###",
-                  "G#H"
-                ]
-              ],
-              "chars": {
-                "#": "minecraft:deepslate",
-                "A": "minecraft:stone",
-                "B": "minecraft:dirt",
-                "C": "minecraft:grass_block",
-                "D": "minecraft:sand",
-                "E": "minecraft:cobbled_deepslate",
-                "F": "minecraft:iron_block",
-                "G": "minecraft:gold_block",
-                "H": "minecraft:diamond_block"
-              }
-            }
-            """;
-    private static final String MULTIBLOCK_DEFINITION_2 = """
-            {
-              "pattern": [
-                [
-                  " # "
-                ],
-                [
-                  "###"
-                ],
-                [
-                  " * "
-                ]
-              ],
-              "chars": {
-                "*": "minecraft:iron_block",
-                " ": "minecraft:air",
-                "#": "minecraft:pumpkin"
-              }
-            }
-            """;
-    private PatternMultiblock multiblock;
-
     @Override
     public void onInitialize() {
         // This code runs as soon as Minecraft is in a mod-load-ready state.
         // However, some things (like resources) may still be uninitialized.
         // Proceed with mild caution.
-        //THESE ARE ALL DEV FEATURES IM TOO LAZY TO MAKE A TESTMOD
-        ServerLifecycleEvents.SERVER_STARTED.register(minecraftServer -> {
-            multiblock = PatternMultiblock.CODEC.parse(minecraftServer.getRegistryManager().getOps(JsonOps.INSTANCE), JsonParser.parseString(MULTIBLOCK_DEFINITION_2)).getOrThrow();
-        });
+        ConstructaRegistries.init();
+        MultiblockType.init();
         CommandRegistrationCallback.EVENT.register((commandDispatcher, commandRegistryAccess, registrationEnvironment) -> {
-            commandDispatcher.register(CommandManager.literal("testmultiblock")
-                    .requires(ServerCommandSource::isExecutedByPlayer)
-                    .executes(commandContext -> {
-                        multiblock.construct(commandContext.getSource().getWorld(), commandContext.getSource().getPlayer().getBlockPos());
-                        return 1;
-                    }));
-            commandDispatcher.register(CommandManager.literal("testmultiblock2")
-                    .requires(ServerCommandSource::isExecutedByPlayer)
-                    .executes(commandContext -> {
-                        multiblock.constructFromPattern(commandContext.getSource().getWorld(), commandContext.getSource().getPlayer().getBlockPos());
-                        return 1;
-                    }));
-            commandDispatcher.register(CommandManager.literal("testmultiblock3")
-                    .then(CommandManager.argument("where", BlockPosArgumentType.blockPos())
-                            .requires(ServerCommandSource::isExecutedByPlayer)
-                            .executes(commandContext -> {
-                                LOGGER.info(String.valueOf(multiblock.wasFound(commandContext.getSource().getWorld(), BlockPosArgumentType.getBlockPos(commandContext, "where"))));
-                                return 1;
-                            })));
+            commandDispatcher.register(CommandManager.literal("multiblock")
+                    .then(CommandManager.argument("multiblock", RegistryEntryReferenceArgumentType.registryEntry(commandRegistryAccess, ConstructaRegistries.Keys.MULTIBLOCKS))
+                            .then(CommandManager.literal("place")
+                                    .then(CommandManager.argument("pos", BlockPosArgumentType.blockPos())
+                                            .requires(source -> source.hasPermissionLevel(2))
+                                            .executes(commandContext -> {
+                                                Multiblock multiblock = RegistryEntryReferenceArgumentType.getRegistryEntry(commandContext, "multiblock", ConstructaRegistries.Keys.MULTIBLOCKS).value();
+                                                multiblock.construct(commandContext.getSource().getWorld(), BlockPosArgumentType.getBlockPos(commandContext, "pos"));
+                                                commandContext.getSource().sendFeedback(() -> Text.translatable("message.multiblock.place"), false);
+                                                return 1;
+                                            })))
+                            .then(CommandManager.literal("check")
+                                    .then(CommandManager.argument("pos", BlockPosArgumentType.blockPos())
+                                            .requires(source -> source.hasPermissionLevel(2))
+                                            .executes(commandContext -> {
+                                                Multiblock multiblock = RegistryEntryReferenceArgumentType.getRegistryEntry(commandContext, "multiblock", ConstructaRegistries.Keys.MULTIBLOCKS).value();
+                                                boolean bool = multiblock.wasFound(commandContext.getSource().getWorld(), BlockPosArgumentType.getBlockPos(commandContext, "pos"));
+                                                commandContext.getSource().sendFeedback(() -> bool ? Text.translatable("message.multiblock.found") : Text.translatable("message.multiblock.notfound"), false);
+                                                return 1;
+                                            }))))
+            );
         });
 
 
