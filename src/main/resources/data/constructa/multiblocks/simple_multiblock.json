@@ -1,0 +1,15 @@
+{
+  "name": "simple_multiblock",
+  "pattern": [
+    [
+      ["#", "#", "#"],
+      ["#", "$", "#"],
+      ["#", "#", "#"]
+    ]
+  ],
+  "block_mappings": {
+    "#": "minecraft:stone",
+    "$": "minecraft:diamond_block"
+  },
+  "preview": true
+}

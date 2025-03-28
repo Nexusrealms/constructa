@@ -1,6 +1,7 @@
 package de.nexusrealms.constructa;
 
 import de.nexusrealms.constructa.command.CheckMultiblockCommand;
+import de.nexusrealms.constructa.manager.MultiblockManager;
 import de.nexusrealms.constructa.multiblocks.SimpleMultiblock;
 import de.nexusrealms.constructa.registry.ConstructaEvents;
 import net.fabricmc.api.ModInitializer;
@@ -15,6 +16,8 @@ public class Constructa implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.resource.ResourceType.SERVER_DATA)
+            .registerReloadListener(new MultiblockManager());
         ConstructaEvents.register();
         SimpleMultiblock.register();
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
