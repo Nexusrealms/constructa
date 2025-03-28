@@ -8,6 +8,7 @@ import net.minecraft.block.pattern.BlockPattern;
 import net.minecraft.block.pattern.BlockPatternBuilder;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.WorldView;
 
 import java.lang.reflect.Array;
@@ -25,6 +26,7 @@ public class PatternMultiblock implements Multiblock {
     //List of layers of Z rows of X strings
     //So iterates YZX
     private final List<List<String>> pattern;
+    private final MultiblockMatcher matcher;
     private final Map<Character, BlockPositionPredicate> chars;
 
     public List<List<String>> pattern() {
@@ -39,6 +41,7 @@ public class PatternMultiblock implements Multiblock {
     public PatternMultiblock(List<List<String>> pattern, Map<Character, BlockPositionPredicate> chars) {
         this.pattern = pattern;
         this.chars = chars;
+        this.matcher = new MultiblockMatcher(this);
         transformed = toPattern();
         this.width = transformed.getWidth();
         this.height = transformed.getHeight();
@@ -46,7 +49,18 @@ public class PatternMultiblock implements Multiblock {
     }
     @Override
     public boolean wasFound(WorldView world, BlockPos searchPos) {
-        return transformed.searchAround(world, searchPos) != null;
+        // First try the fast search using BlockPattern
+        if (transformed.searchAround(world, searchPos) != null) {
+            return true;
+        }
+
+        // If that fails, try the rotation-aware matcher
+        for (Direction facing : Direction.Type.HORIZONTAL) {
+            if (matcher.matches(world, searchPos, facing)) {
+                return true;
+            }
+        }
+        return false;
     }
     public void construct(ServerWorld world, BlockPos frontTopLeft){
         List<List<List<BlockState>>> states = pattern.stream().map(layer -> layer.stream().map(row -> row.chars().mapToObj(i -> (char) i).map(chars::get).map(p -> p.stateForPreview(world.getRegistryManager())).toList()).toList()).toList();
