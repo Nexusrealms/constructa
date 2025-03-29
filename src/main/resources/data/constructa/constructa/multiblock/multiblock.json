@@ -27,9 +27,5 @@
     "F": "minecraft:iron_block",
     "G": "minecraft:gold_block",
     "H": "minecraft:diamond_block"
-  },
-  "checkablePositions": [
-    [0, 0, 0],
-    [1, 2, 0]
-  ]
+  }
 }

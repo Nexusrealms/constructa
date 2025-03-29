@@ -16,19 +16,18 @@ import net.minecraft.world.WorldView;
 
 import java.util.List;
 import java.util.Map;
+import java.util.stream.StreamSupport;
 
 public class PatternMultiblock implements Multiblock {
 
     public static final MapCodec<PatternMultiblock> CODEC = RecordCodecBuilder.mapCodec(instance -> instance.group(
             Codec.STRING.listOf().listOf().fieldOf("pattern").forGetter(PatternMultiblock::pattern),
-            Codec.unboundedMap(Constructa.CHARACTER_CODEC, BlockPositionPredicate.CODEC).fieldOf("chars").forGetter(PatternMultiblock::chars),
-            BlockPos.CODEC.listOf().fieldOf("checkablePositions").forGetter(PatternMultiblock::checkablePositions)
+            Codec.unboundedMap(Constructa.CHARACTER_CODEC, BlockPositionPredicate.CODEC).fieldOf("chars").forGetter(PatternMultiblock::chars)
     ).apply(instance, PatternMultiblock::new));
     //List of layers of Z rows of X strings
     //So iterates YZX
     private final List<List<String>> pattern;
     private final Map<Character, BlockPositionPredicate> chars;
-    private final List<BlockPos> checkablePositions;
     public List<List<String>> pattern() {
         return pattern;
     }
@@ -38,18 +37,14 @@ public class PatternMultiblock implements Multiblock {
     }
 
     private final int width, height, depth;
-    public PatternMultiblock(List<List<String>> pattern, Map<Character, BlockPositionPredicate> chars, List<BlockPos> checkablePositions) {
+    public PatternMultiblock(List<List<String>> pattern, Map<Character, BlockPositionPredicate> chars) {
         this.pattern = pattern;
         this.chars = chars;
-        this.checkablePositions = checkablePositions;
         this.width = pattern.getFirst().getFirst().length();
         this.height = pattern.size();
         this.depth = pattern.getFirst().size();
     }
 
-    public List<BlockPos> checkablePositions() {
-        return checkablePositions;
-    }
 
     @Override
     public boolean wasFound(WorldView world, BlockPos searchPos) {
@@ -90,6 +85,8 @@ public class PatternMultiblock implements Multiblock {
     public static class Matcher {
         private final PatternMultiblock multiblock;
         private final int width, height, depth;
+        private final int expansionWidth, expansionHeight, expansionDepth;
+
 
         public Matcher(PatternMultiblock multiblock) {
             this.multiblock = multiblock;
@@ -97,11 +94,15 @@ public class PatternMultiblock implements Multiblock {
             this.height = multiblock.height;
             this.depth = multiblock.depth;
             this.width = multiblock.width;
+            this.expansionWidth = width - 1;
+            this.expansionHeight = height - 1;
+            this.expansionDepth = depth - 1;
+
         }
         public Pair<BlockPos, Direction> searchForMatchByCheckables(WorldView world, BlockPos pos){
             return Direction.Type.HORIZONTAL.stream()
                     //Adds the checkable positions to the stream
-                    .flatMap(direction -> multiblock.checkablePositions.stream()
+                    .flatMap(direction -> StreamSupport.stream(BlockPos.iterate(BlockPos.ORIGIN, new BlockPos(expansionWidth, expansionHeight, expansionDepth)).spliterator(), false)
                             //Rotates the checkable position with the direction
                             .map(blockPos -> blockPos.rotate(dirToRotNorthDefault(direction)))
                             //Adapts the checkable position to the corner position
